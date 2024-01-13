@@ -1,57 +1,104 @@
 class Cell{
-    constructor(){
-        this.x = 10;
-        this.y = 10;
+    constructor(x,y,radius , color){
+        this.x = x;
+        this.y = y;
 
-        this.radius = 50;
+        this.velocity ={
+            x:0,y:0
+        }
+
+        this.color = color || {
+            r:random(0,255),
+            g:random(0,255),
+            b:random(0,255)
+        }
+
+        this.acceleration = 1;
+
+        this.radius = radius;
         this.yPressure = 1;
+        this.xPressure = 1;
+        this.width = this.radius * this.xPressure;
         this.height = this.radius * this.yPressure;
 
         this.readyToMitosis = false;
+        this.mitosed = false;
     }
 
     draw(){
         noStroke();
-        fill(255, 0, 0, map(150,70,150,1000,1000))
+        fill(
+            this.color.r,
+            this.color.g,
+            this.color.b,
+            map(this.radius,0,100,0,255)
+        )
         ellipse(
             this.x,
             this.y,
-            this.radius,
+            this.width,
             this.height
         )
     }
 
-    update(dir){
+    calculateDimensions(){
+        this.width = this.radius * this.xPressure;
+        this.height = this.radius * this.yPressure;
+    }
+
+    mitosis(){
+        if (!this.mitosed) {
+            this.radius = random(10,51);
+            this.color = {
+                r:random(0,255),
+                g:random(0,255),
+                b:random(0,255)
+            }
+            let newCell
+            newCell = new Cell(this.x, this.y, this.radius , this.color)
+            cells.push(newCell);
+            this.velocity.x = random(-1,1);
+            this.velocity.y =  random(-1,1);
+            newCell.velocity.x = random(-1,1);
+            newCell.velocity.y = random(-1,1);
+
+            this.mitosed = true;
+        }
+    }
+
+
+    update(){
+        this.x = this.x + this.velocity.x
+        this.y = this.y + this.velocity.y
+
+        this.velocity.x = this.velocity.x * this.acceleration
+        if(this.velocity >= 0){
+            this.acceleration -= 0.01
+        }
         if(this.radius < 100){
-            this.radius += 1
-            this.height = this.radius * this.yPressure;
+            this.radius += 0.5
+            this.calculateDimensions();    
+            this.mitosed = false;
         }
         else{
-            this.readyToMitosis = true;
-        }
-
-        if(this.readyToMitosis && this.height > 65){
-            this.x += dir * 0.8
-            this.yPressure -= 0.01;
-            this.height = this.radius * this.yPressure;
+            this.mitosis();
         }
     }
 }
 
-let aCell = new Cell();
-let bCell = new Cell();
-
-
+let cells = [];
+let aCell ;
 function setup() {
+     aCell = new Cell(width/2,height/2,50);
+     cells.push(aCell)
     createCanvas(800, 800);
   }
 
   function draw() {
     translate(width/2, height/2)
     background(220);
-    aCell.draw();
-    bCell.draw()
-    aCell.update(1);
-    bCell.update(-1);
-
+     cells.forEach(cell => {
+        cell.draw();
+        cell.update();
+    });
   }
